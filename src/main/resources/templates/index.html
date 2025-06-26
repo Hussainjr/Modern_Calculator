@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Modern Calculator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #b3d8fd 0%, #6eb6ff 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+        .background-circle {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, #4a90e2 0%, transparent 70%);
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .calculator {
+            position: relative;
+            z-index: 1;
+            background: rgba(255,255,255,0.25);
+            box-shadow: 0 8px 32px 0 rgba(31,38,135,0.37);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 32px;
+            padding: 36px 32px 32px 32px;
+            max-width: 340px;
+            width: 100%;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        .display {
+            width: 100%;
+            background: rgba(255,255,255,0.45);
+            border: none;
+            border-radius: 16px;
+            font-size: 2rem;
+            text-align: right;
+            padding: 18px 16px;
+            margin-bottom: 24px;
+            color: #222;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        .btn {
+            background: rgba(255,255,255,0.7);
+            border: none;
+            border-radius: 14px;
+            font-size: 1.3rem;
+            padding: 18px 0;
+            color: #1976d2;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+        }
+        .btn:active {
+            background: #e3f0ff;
+            color: #0d47a1;
+        }
+        .btn.op {
+            background: #1976d2;
+            color: #fff;
+        }
+        .btn.op:active {
+            background: #0d47a1;
+        }
+        .btn.equal {
+            background: #0d47a1;
+            color: #fff;
+            grid-column: span 2;
+        }
+        .result {
+            width: 100%;
+            background: rgba(255,255,255,0.45);
+            border: none;
+            border-radius: 16px;
+            font-size: 2rem;
+            text-align: right;
+            padding: 18px 16px;
+            margin-top: 12px;
+            color: #222;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            min-height: unset;
+        }
+        .error { color: #d9534f; }
+        /* Dark mode styles */
+        body.dark-mode {
+            background: linear-gradient(135deg, #23272b 0%, #181a1b 100%);
+            color: #e0e0e0;
+        }
+        body.dark-mode .background-circle {
+            background: radial-gradient(circle, #0d47a1 0%, transparent 70%);
+        }
+        body.dark-mode .calculator {
+            background: rgba(35,39,43,0.7);
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.7);
+        }
+        body.dark-mode .display {
+            background: rgba(35,39,43,0.8);
+            color: #fff;
+        }
+        body.dark-mode .btn {
+            background: rgba(44,55,68,0.7);
+            color: #90caf9;
+        }
+        body.dark-mode .btn:active {
+            background: #23272b;
+            color: #fff;
+        }
+        body.dark-mode .btn.op {
+            background: #1976d2;
+            color: #fff;
+        }
+        body.dark-mode .btn.equal {
+            background: #0d47a1;
+            color: #fff;
+        }
+        body.dark-mode .error { color: #ff6b6b; }
+        body.dark-mode .result {
+            background: rgba(35,39,43,0.8);
+            color: #fff;
+        }
+        .dark-mode-toggle {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #333;
+            transition: color 0.2s;
+            z-index: 2;
+        }
+        body.dark-mode .dark-mode-toggle { color: #e0e0e0; }
+        @media (max-width: 600px) {
+            .calculator {
+                padding: 18px 6px 18px 6px;
+                max-width: 98vw;
+                border-radius: 18px;
+            }
+            .display, .result {
+                font-size: 1.3rem;
+                padding: 12px 8px;
+                border-radius: 10px;
+            }
+            .buttons {
+                gap: 8px;
+            }
+            .btn {
+                font-size: 1rem;
+                padding: 12px 0;
+                border-radius: 8px;
+            }
+        }
+        @media (max-width: 400px) {
+            .calculator {
+                padding: 8px 2px 8px 2px;
+                border-radius: 10px;
+            }
+            .display, .result {
+                font-size: 1rem;
+                padding: 8px 4px;
+                border-radius: 6px;
+            }
+            .btn {
+                font-size: 0.9rem;
+                padding: 8px 0;
+                border-radius: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="background-circle"></div>
+<button class="dark-mode-toggle" id="darkModeToggle" title="Toggle dark mode">🌙</button>
+<div class="calculator">
+    <form id="calcForm" th:action="@{/add}" method="post" autocomplete="off" onsubmit="return false;">
+        <input class="display" id="display" name="expression" placeholder="0" readonly />
+        <div class="buttons">
+            <button type="button" class="btn" onclick="press('7')">7</button>
+            <button type="button" class="btn" onclick="press('8')">8</button>
+            <button type="button" class="btn" onclick="press('9')">9</button>
+            <button type="button" class="btn op" onclick="press('/')">÷</button>
+            <button type="button" class="btn" onclick="press('4')">4</button>
+            <button type="button" class="btn" onclick="press('5')">5</button>
+            <button type="button" class="btn" onclick="press('6')">6</button>
+            <button type="button" class="btn op" onclick="press('*')">×</button>
+            <button type="button" class="btn" onclick="press('1')">1</button>
+            <button type="button" class="btn" onclick="press('2')">2</button>
+            <button type="button" class="btn" onclick="press('3')">3</button>
+            <button type="button" class="btn op" onclick="press('-')">-</button>
+            <button type="button" class="btn" onclick="press('0')">0</button>
+            <button type="button" class="btn" onclick="press('.')">.</button>
+            <button type="button" class="btn" onclick="clearDisplay()">AC</button>
+            <button type="button" class="btn op" onclick="press('+')">+</button>
+            <button type="button" class="btn equal" onclick="calculate()">=</button>
+        </div>
+    </form>
+    <div class="result" id="result">0</div>
+    <div class="error" id="error"></div>
+</div>
+<script>
+    // Dark mode toggle logic
+    const toggle = document.getElementById('darkModeToggle');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    function setDarkMode(on) {
+        document.body.classList.toggle('dark-mode', on);
+        toggle.textContent = on ? '☀️' : '🌙';
+    }
+    // Load preference
+    const darkPref = localStorage.getItem('darkMode');
+    if (darkPref === 'on' || (darkPref === null && prefersDark)) {
+        setDarkMode(true);
+    }
+    toggle.addEventListener('click', () => {
+        const isDark = document.body.classList.toggle('dark-mode');
+        toggle.textContent = isDark ? '☀️' : '🌙';
+        localStorage.setItem('darkMode', isDark ? 'on' : 'off');
+    });
+
+    // Calculator logic
+    let current = '';
+    function press(val) {
+        document.getElementById('error').textContent = '';
+        if (current.length > 20) return;
+        current += val;
+        document.getElementById('display').value = current;
+    }
+    function clearDisplay() {
+        current = '';
+        document.getElementById('display').value = '';
+        document.getElementById('result').textContent = '0';
+        document.getElementById('error').textContent = '';
+    }
+    function calculate() {
+        try {
+            // Evaluate the expression
+            let result = eval(current.replace(/÷/g, '/').replace(/×/g, '*'));
+            document.getElementById('result').textContent = '= ' + result;
+            document.getElementById('error').textContent = '';
+        } catch (e) {
+            document.getElementById('error').textContent = 'Invalid expression';
+            document.getElementById('result').textContent = '0';
+        }
+    }
+</script>
+</body>
+</html> 
