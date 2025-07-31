@@ -15,9 +15,6 @@ public class CalculatorController {
     @Autowired
     private CalculatorService calculatorService;
 
-    @Autowired
-    private ModelMapper modelMapper;
-
     @RequestMapping("/")
     public String index() {
         return "index";
